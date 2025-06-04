@@ -1,0 +1,19 @@
+# 忽略虚拟环境
+venv/
+ENV/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 忽略 Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# 忽略日志和系统文件
+*.log
+.DS_Store
+
+# PyCharm、VSCode 等 IDE 配置文件
+.idea/
+.vscode/
