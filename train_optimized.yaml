@@ -1,0 +1,67 @@
+# 训练任务类型
+task: detect
+mode: train
+
+# 模型结构（建议使用 yolov8s 提升准确率）
+model: yolov8s.pt
+
+# 数据集路径配置
+data: dataset.yaml
+
+# 基本训练参数
+epochs: 100
+batch: 16            # 若爆显存可改为 24 或 16
+imgsz: 640
+patience: 20
+lr0: 0.005
+cos_lr: true
+
+# 优化器与调度器
+optimizer: auto
+warmup_epochs: 3.0
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+momentum: 0.937
+weight_decay: 0.0005
+
+# 损失函数权重（保持默认即可）
+box: 7.5
+cls: 0.5
+dfl: 1.5
+
+# 数据增强（已调优）
+hsv_h: 0.015
+hsv_s: 0.7
+hsv_v: 0.4
+degrees: 10
+translate: 0.1
+scale: 0.5
+shear: 2
+perspective: 0.0005
+flipud: 0.5
+fliplr: 0.5
+mosaic: 1
+mixup: 0.1
+cutmix: 0.0
+copy_paste: 0.2
+erasing: 0.2
+auto_augment: randaugment
+
+# 其他设置
+cache: false
+device: 0
+workers: 8
+seed: 0
+deterministic: true
+single_cls: false
+rect: false
+amp: true
+multi_scale: false
+
+# 结果保存与监控
+save: true
+save_json: true
+plots: true
+name: train_optimized
+project: runs/detect
+exist_ok: true
