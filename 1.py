@@ -1,14 +1,23 @@
 import os
 
-label_dir = r'F:\qq\yolo_project\box_missing_detector\labels\val'
+LABEL_DIR = r'F:\qq\yolo_project\box_missing_detector\labels\val'  # 替换成你的标签目录路径
 
-for file in os.listdir(label_dir):
-    if file.endswith(".txt"):
-        path = os.path.join(label_dir, file)
-        with open(path, 'r') as f:
-            lines = f.readlines()
-        with open(path, 'w') as f:
-            for line in lines:
+for filename in os.listdir(LABEL_DIR):
+    if filename.endswith(".txt"):
+        file_path = os.path.join(LABEL_DIR, filename)
+        new_lines = []
+        with open(file_path, 'r') as f:
+            for line in f:
                 parts = line.strip().split()
-                parts[0] = '0'  # 把 class id 改为 0（或 1，视你的用途）
-                f.write(' '.join(parts) + '\n')
+                if parts and parts[0] == '15':
+                    parts[0] = '0'
+                elif parts and parts[0] == '16':
+                    parts[0] = '1'
+                new_line = ' '.join(parts)
+                new_lines.append(new_line)
+
+        # 覆盖写入原文件
+        with open(file_path, 'w') as f:
+            f.write('\n'.join(new_lines))
+
+print("✅ 所有标签文件已成功更新（15→0，16→1）")

@@ -2,42 +2,51 @@ import os
 import cv2
 import numpy as np
 from ultralytics import YOLO
-from sklearn.cluster import KMeans  # ✅ 添加这行
+from sklearn.cluster import KMeans
 
 # === 配置 ===
 NUM_ROWS = 5
 NUM_COLUMNS = 5
 EXPECTED_PER_CELL = 1
 IMAGE_DIR = r'F:\qq\yolo_project\验证集'
-MODEL_PATH = r'F:\qq\yolo_project\box_missing_detector\runs\detect\train_optimized\weights\best.pt'
+MODEL_PATH = r'F:\qq\yolo_project\box_missing_detector\runs\detect\train_optimized3\weights\best.pt'
 
 model = YOLO(MODEL_PATH)
 class_map = {0: 'box', 1: 'fbox'}
 
+def sort_kmeans_labels(centers):
+    """返回从小到大的 label 映射关系"""
+    sorted_indices = np.argsort(centers.reshape(-1))
+    label_map = {orig: new for new, orig in enumerate(sorted_indices)}
+    return label_map
 
 def analyze_image(image_path):
-    results = model(image_path, conf=0.8, iou=0.5)[0]
-
+    results = model(image_path, conf=0.4, iou=0.5)[0]
     boxes = results.boxes
+
     if boxes is None or len(boxes) == 0:
         print(f"{os.path.basename(image_path)} ❌ 无检测结果")
         return
 
-    # 获取中心点和类别
     x_centers = boxes.xywh[:, 0].cpu().numpy() * results.orig_shape[1]
     y_centers = boxes.xywh[:, 1].cpu().numpy() * results.orig_shape[0]
     cls_indices = boxes.cls.cpu().numpy().astype(int)
 
     coords = np.stack([x_centers, y_centers], axis=1)
+
     if len(coords) < NUM_ROWS * NUM_COLUMNS:
         print(f"{os.path.basename(image_path)} ⚠️ 检测框数不足，仅有 {len(coords)} 个")
 
-    # KMeans 聚类用于分配行列
+    # KMeans 聚类
     kmeans_x = KMeans(n_clusters=NUM_COLUMNS, random_state=0).fit(x_centers.reshape(-1, 1))
     kmeans_y = KMeans(n_clusters=NUM_ROWS, random_state=0).fit(y_centers.reshape(-1, 1))
 
-    cols = kmeans_x.predict(x_centers.reshape(-1, 1))
-    rows = kmeans_y.predict(y_centers.reshape(-1, 1))
+    # 排序聚类标签，使其有序（左到右，上到下）
+    x_label_map = sort_kmeans_labels(kmeans_x.cluster_centers_)
+    y_label_map = sort_kmeans_labels(kmeans_y.cluster_centers_)
+
+    cols = [x_label_map[label] for label in kmeans_x.labels_]
+    rows = [y_label_map[label] for label in kmeans_y.labels_]
 
     # 初始化网格
     grid = [[{'box': 0, 'fbox': 0} for _ in range(NUM_COLUMNS)] for _ in range(NUM_ROWS)]
@@ -71,7 +80,3 @@ def analyze_image(image_path):
 for fn in os.listdir(IMAGE_DIR):
     if fn.lower().endswith(('.jpg', '.png')):
         analyze_image(os.path.join(IMAGE_DIR, fn))
-
-
-
-

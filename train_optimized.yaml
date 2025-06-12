@@ -3,14 +3,15 @@ task: detect
 mode: train
 
 # 模型结构（建议使用 yolov8s 提升准确率）
-model: yolov8s.pt
+model: yolov8s
+
 
 # 数据集路径配置
 data: dataset.yaml
 
 # 基本训练参数
 epochs: 100
-batch: 16            # 若爆显存可改为 24 或 16
+batch: 8         # 若爆显存可改为 24 或 16
 imgsz: 640
 patience: 20
 lr0: 0.005
@@ -40,8 +41,8 @@ shear: 2
 perspective: 0.0005
 flipud: 0.5
 fliplr: 0.5
-mosaic: 1
-mixup: 0.1
+mosaic: 1.0
+mixup: 0.2
 cutmix: 0.0
 copy_paste: 0.2
 erasing: 0.2
@@ -62,6 +63,6 @@ multi_scale: false
 save: true
 save_json: true
 plots: true
-name: train_optimized
+name: train_optimized3
 project: runs/detect
-exist_ok: true
+exist_ok: false
