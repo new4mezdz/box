@@ -24,7 +24,7 @@ def analyze_and_save(image_path, save_dir, pos_txt_writer):
     results = model(image_path, conf=0.4, iou=0.5)[0]
     boxes = results.boxes
     if boxes is None or len(boxes) == 0:
-        return
+        return False  # 不含 fbox
 
     x_centers = boxes.xywh[:, 0].cpu().numpy() * results.orig_shape[1]
     y_centers = boxes.xywh[:, 1].cpu().numpy() * results.orig_shape[0]
@@ -51,28 +51,30 @@ def analyze_and_save(image_path, save_dir, pos_txt_writer):
             if label == 'fbox':
                 fbox_positions.append((row + 1, col + 1))
 
-    if fbox_positions:
-        # 保存图像
-        annotated = results.plot()
-        annotated_bgr = cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR)
-        save_img_path = os.path.join(save_dir, os.path.basename(image_path))
-        cv2.imwrite(save_img_path, annotated_bgr)
+    # 保存图像
+    annotated = results.plot()
+    annotated_bgr = cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR)
+    save_img_path = os.path.join(save_dir, os.path.basename(image_path))
+    cv2.imwrite(save_img_path, annotated_bgr)
 
-        # 保存位置信息
+    # 输出 fbox 位置（如果有）
+    if fbox_positions:
         fbox_str = ', '.join([f"{r}行{c}列" for r, c in fbox_positions])
         pos_txt_writer.write(f"{os.path.basename(image_path)}: {fbox_str}\n")
+        return True
+    return False
 
-# 主流程
+# === 主流程 ===
 yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
 input_folder = os.path.join(BASE_DIR, yesterday)
 output_folder = input_folder + OUTPUT_SUFFIX
 os.makedirs(output_folder, exist_ok=True)
 
-position_txt_path = os.path.join(output_folder, "fbox位置记录.txt")
-with open(position_txt_path, 'w', encoding='utf-8') as f_txt:
+fbox_log_path = os.path.join(output_folder, "含fbox图像列表.txt")
+with open(fbox_log_path, 'w', encoding='utf-8') as fbox_log:
     for file in os.listdir(input_folder):
         if file.lower().endswith(('.jpg', '.png')):
-            image_path = os.path.join(input_folder, file)
-            analyze_and_save(image_path, output_folder, f_txt)
+            img_path = os.path.join(input_folder, file)
+            has_fbox = analyze_and_save(img_path, output_folder, fbox_log)
 
-print("✅ 处理完成，已保存所有含 fbox 的图像及其位置信息。")
+print("✅ 所有图片处理完成，检测图像已保存，fbox图像列表已生成。")
